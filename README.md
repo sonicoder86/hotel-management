@@ -2,7 +2,12 @@
 
 Based on [YouTube tutorial](https://www.youtube.com/watch?v=kiCH27qsNL8)
 
-
+```bash
+brew install stripe/stripe-cli/stripe
+stripe login
+stripe listen --forward-to localhost:3000/api/webhook --skip-verify
+stripe trigger checkout.session.completed
+```
 
 This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
 

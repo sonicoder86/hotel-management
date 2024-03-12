@@ -12,17 +12,15 @@ import LoadingSpinner from '../../loading';
 import { useState } from 'react';
 import { BsJournalBookmarkFill } from 'react-icons/bs';
 import { GiMoneyStack } from 'react-icons/gi';
-// import Table from '@/components/Table/Table';
-// import Chart from '@/components/Chart/Chart';
-// import RatingModal from '@/components/RatingModal/RatingModal';
-// import BackDrop from '@/components/BackDrop/BackDrop';
-import toast from 'react-hot-toast';
-import Table from '@/components/Table/Table'
+import Table from '@/components/Table/Table';
 import Chart from '@/components/Chart/Chart';
+import RatingModal from '@/components/RatingModal/RatingModal';
+import BackDrop from '@/components/BackDrop/BackDrop';
+import toast from 'react-hot-toast';
 
-export default function UserDetails(props: { params: { id: string } }) {
+const UserDetails = (props: { params: { id: string } }) => {
   const {
-    params: {id: userId},
+    params: { id: userId },
   } = props;
 
   const [currentNav, setCurrentNav] = useState<
@@ -31,11 +29,41 @@ export default function UserDetails(props: { params: { id: string } }) {
   const [roomId, setRoomId] = useState<string | null>(null);
   const [isRatingVisible, setIsRatingVisible] = useState(false);
   const [isSubmittingReview, setIsSubmittingReview] = useState(false);
-  const [ratingValue, setRatingValue] = useState<number | null>(0);
+  const [ratingValue, setRatingValue] = useState<number>(0);
   const [ratingText, setRatingText] = useState('');
 
-  const fetchUserBooking = async () => getUserBookings(userId);
+  const toggleRatingModal = () => setIsRatingVisible(prevState => !prevState);
 
+  const reviewSubmitHandler = async () => {
+    if (!ratingText.trim().length || !ratingValue) {
+      return toast.error('Please provide a rating text and a rating');
+    }
+
+    if (!roomId) toast.error('Id not provided');
+
+    setIsSubmittingReview(true)
+
+    try {
+      const { data } = await axios.post('/api/users', {
+        reviewText: ratingText,
+        ratingValue,
+        roomId,
+      });
+      console.log(data);
+      toast.success('Review Submitted');
+    } catch (error) {
+      console.log(error);
+      toast.error('Review Failed');
+    } finally {
+      setRatingText('');
+      setRatingValue(0);
+      setRoomId(null);
+      setIsSubmittingReview(false);
+      setIsRatingVisible(false);
+    }
+  };
+
+  const fetchUserBooking = async () => getUserBookings(userId);
   const fetchUserData = async () => {
     const { data } = await axios.get<User>('/api/users');
     return data;
@@ -62,8 +90,6 @@ export default function UserDetails(props: { params: { id: string } }) {
   if (loadingUserData) return <LoadingSpinner />;
   if (!userData) throw new Error('Cannot fetch data');
   if (!userData) throw new Error('Cannot fetch data');
-
-  console.log(userData)
 
   return (
     <div className='container mx-auto px-2 md:px-4 py10'>
@@ -160,7 +186,7 @@ export default function UserDetails(props: { params: { id: string } }) {
               <Table
                 bookingDetails={userBookings}
                 setRoomId={setRoomId}
-                // toggleRatingModal={toggleRatingModal}
+                toggleRatingModal={toggleRatingModal}
               />
             )
           ) : (
@@ -175,17 +201,19 @@ export default function UserDetails(props: { params: { id: string } }) {
         </div>
       </div>
 
-      {/*<RatingModal*/}
-      {/*  isOpen={isRatingVisible}*/}
-      {/*  ratingValue={ratingValue}*/}
-      {/*  setRatingValue={setRatingValue}*/}
-      {/*  ratingText={ratingText}*/}
-      {/*  setRatingText={setRatingText}*/}
-      {/*  isSubmittingReview={isSubmittingReview}*/}
-      {/*  reviewSubmitHandler={reviewSubmitHandler}*/}
-      {/*  toggleRatingModal={toggleRatingModal}*/}
-      {/*/>*/}
-      {/*<BackDrop isOpen={isRatingVisible} />*/}
+      <RatingModal
+        isOpen={isRatingVisible}
+        ratingValue={ratingValue}
+        setRatingValue={setRatingValue}
+        ratingText={ratingText}
+        setRatingText={setRatingText}
+        isSubmittingReview={isSubmittingReview}
+        reviewSubmitHandler={reviewSubmitHandler}
+        toggleRatingModal={toggleRatingModal}
+      />
+      <BackDrop isOpen={isRatingVisible} />
     </div>
   );
-}
+};
+
+export default UserDetails;
